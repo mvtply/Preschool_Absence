@@ -1,0 +1,38 @@
+[
+  {
+    "student_name": "Emily Johnson",
+    "class_name": "Reception A",
+    "reason": "Feeling unwell with a mild fever",
+    "absence_date": "2025-07-14"
+  },
+  {
+    "student_name": "Charlotte Williams",
+    "class_name": "Reception A",
+    "reason": "Family bereavement - attending funeral",
+    "absence_date": "2025-07-14"
+  },
+  {
+    "student_name": "Oliver Smith",
+    "class_name": "Year 1 Green",
+    "reason": "Family dental appointment",
+    "absence_date": "2025-07-14"
+  },
+  {
+    "student_name": "Sophie Brown",
+    "class_name": "Reception B",
+    "reason": "Cold symptoms - runny nose and cough",
+    "absence_date": "2025-07-14"
+  },
+  {
+    "student_name": "James Wilson",
+    "class_name": "Year 2 Red",
+    "reason": "Doctor's appointment for routine check-up",
+    "absence_date": "2025-07-14"
+  },
+  {
+    "student_name": "Isabella Davis",
+    "class_name": "Year 1 Blue",
+    "reason": "Stomach bug - vomiting",
+    "absence_date": "2025-07-14"
+  }
+]
