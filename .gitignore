@@ -6,10 +6,11 @@ node_modules/
 build/
 dist/
 
-# Database files
+# Database files (exclude actual data, keep schema)
 *.db
 *.sqlite
 *.sqlite3
+backend/database/absence_system.db
 
 # Environment variables
 .env

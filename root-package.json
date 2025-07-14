@@ -1,0 +1,39 @@
+{
+  "name": "preschool-absence-system",
+  "version": "1.0.0",
+  "description": "University of Cambridge Primary School Absence Tracking System - Full Stack Application",
+  "main": "backend/server.js",
+  "scripts": {
+    "install:all": "cd backend && npm install && cd ../frontend && npm install",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm start", 
+    "dev": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "build": "cd frontend && npm run build",
+    "test:frontend": "cd frontend && npm test",
+    "test": "npm run test:frontend"
+  },
+  "keywords": [
+    "school",
+    "absence-tracking", 
+    "dashboard",
+    "react",
+    "nodejs",
+    "typescript",
+    "material-ui",
+    "sqlite",
+    "phone-system"
+  ],
+  "author": "RoaringSquid",
+  "license": "PROPRIETARY",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/RoaringSquid/Preschool_Absence.git"
+  }
+}

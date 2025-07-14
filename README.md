@@ -1,123 +1,186 @@
-# University of Cambridge Primary School - Frontend Dashboard
+# University of Cambridge Primary School - Absence Tracking System
 
-This is the React frontend for the University of Cambridge Primary School Absence Tracking System.
+A comprehensive full-stack application for tracking student absences through an automated phone system integration.
 
-## Technology Stack
+## 🏗️ Project Structure
 
-- **React 19** with TypeScript
-- **Material-UI (MUI)** for components and styling
-- **Day.js** for date manipulation
-- **Material-UI X Date Pickers** for calendar functionality
+```
+Preschool_Absence/
+├── frontend/                 # React TypeScript frontend
+│   ├── src/
+│   │   ├── components/       # React components
+│   │   ├── App.tsx          # Main application
+│   │   └── theme.ts         # Material-UI theme
+│   ├── public/              # Static assets
+│   ├── package.json         # Frontend dependencies
+│   └── README.md           # Frontend documentation
+├── backend/                 # Node.js Express backend
+│   ├── routes/             # API route handlers
+│   ├── database/           # SQLite database & schema
+│   ├── server.js           # Express server
+│   └── package.json        # Backend dependencies
+├── dummy_absences_today.json # Sample data
+└── README.md               # This file
+```
 
-## Features
-
-### Dashboard Components
-
-- **Today's Absences**: Real-time view of daily absence reports
-- **Absence Calendar**: Monthly calendar view with absence indicators
-- **Absence Statistics**: Analytics and reporting for date ranges
-- **School Banner**: Branded header with school information
-
-### Key Functionality
-
-- **Manual Entry**: Staff can manually add absence records
-- **Simulate Phone Calls**: Generate sample absence data for testing
-- **Delete Absences**: Remove incorrect or duplicate entries
-- **Export Data**: Download absence statistics as CSV
-- **Responsive Design**: Works on desktop, tablet, and mobile devices
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
+- Node.js 16+
+- npm
 
-- Node.js 16+ 
-- npm or yarn
-
-### Installation
-
+### 1. Clone Repository
 ```bash
+git clone https://github.com/RoaringSquid/Preschool_Absence.git
+cd Preschool_Absence
+```
+
+### 2. Install Dependencies
+```bash
+# Install backend dependencies
+cd backend
+npm install
+
+# Install frontend dependencies  
+cd ../frontend
 npm install
 ```
 
-### Development
-
+### 3. Start Development Servers
 ```bash
+# Start backend (from backend directory)
+npm start
+
+# Start frontend (from frontend directory) 
 npm start
 ```
 
-Runs the frontend in development mode on [http://localhost:3000](http://localhost:3000).
+### 4. Access Application
+- **Frontend Dashboard**: http://localhost:3000
+- **Backend API**: http://localhost:5001
+- **API Health Check**: http://localhost:5001/api/health
 
-### Testing
+## 🎯 Features
 
+### Dashboard Features
+- **Real-time Absence Tracking**: View today's absences with color-coded class indicators
+- **Monthly Calendar**: Interactive calendar showing absence patterns
+- **Statistics & Analytics**: Date range reporting with CSV export
+- **Manual Entry System**: Staff can manually add absence records
+- **Phone System Integration**: Automated absence reporting via phone calls
+- **Pending Verification**: Flags calls requiring manual review (poor audio, accents)
+
+### Technical Features
+- **Responsive Design**: Works on desktop, tablet, and mobile
+- **Material-UI Components**: Professional, accessible interface
+- **TypeScript**: Type-safe frontend development
+- **SQLite Database**: Lightweight, file-based data storage
+- **RESTful API**: Clean, documented API endpoints
+- **Real-time Updates**: Live data synchronization
+
+## 📱 User Interface
+
+### Today's Absences
+- Color-coded by class (Reception A/B, Year 1 Green/Blue, Year 2 Red/Yellow)
+- Status indicators: reported, approved, pending verification
+- Phone system integration badges
+- Quick delete functionality
+
+### Absence Calendar
+- Monthly view with absence count badges
+- Click dates for detailed absence information
+- Easy month navigation
+
+### Statistics Dashboard
+- Customizable date range reporting
+- Total absences, unique students, and trends
+- Class-by-class breakdown
+- Export to CSV functionality
+
+## 🔧 API Endpoints
+
+### Absence Management
+- `GET /api/absences/today` - Fetch today's absences
+- `GET /api/absences/range` - Get absences in date range
+- `POST /api/absences` - Add new absence record
+- `PUT /api/absences/:id` - Update absence status
+- `DELETE /api/absences/:id` - Delete absence record
+- `GET /api/absences/stats` - Get absence statistics
+
+### Phone System
+- `POST /api/phone/report` - Report absence from phone system
+- `POST /api/phone/simulate` - Simulate phone calls (testing)
+
+### System
+- `GET /api/health` - API health check
+- `GET /api/classes` - Get all classes
+
+## 🗃️ Database Schema
+
+### Tables
+- **absences**: Main absence records with phone integration
+- **students**: Student information
+- **classes**: Class definitions
+- **phone_logs**: Phone system call logs
+
+### Status Values
+- `reported`: Standard absence report
+- `approved`: Verified and approved
+- `pending verification`: Requires manual review (poor audio quality, heavy accent, etc.)
+
+## 🎨 Design System
+
+- **Theme**: University of Cambridge inspired colors
+- **Palette**: Pastel colors for visual appeal
+- **Typography**: Consistent, accessible font hierarchy
+- **Responsive**: Mobile-first design approach
+- **Components**: Reusable Material-UI components
+
+## 🧪 Testing & Development
+
+### Frontend Testing
 ```bash
+cd frontend
 npm test
 ```
 
-Launches the test runner in interactive watch mode.
-
-## Project Structure
-
-```
-src/
-├── components/           # React components
-│   ├── AbsenceCalendar.tsx    # Monthly calendar view
-│   ├── AbsenceStats.tsx       # Statistics and analytics
-│   ├── SchoolBanner.tsx       # School header component
-│   └── TodayAbsences.tsx      # Daily absence list
-├── App.tsx              # Main application component
-├── theme.ts             # Material-UI theme configuration
-└── index.tsx            # Application entry point
-```
-
-## Component Details
-
-### TodayAbsences
-- Displays real-time absence data for the current day
-- Color-coded by class (Reception A/B, Year 1 Green/Blue, Year 2 Red/Yellow)
-- Status indicators (reported, approved, pending verification)
-- Delete functionality with confirmation
-- Phone system integration indicators
-
-### AbsenceCalendar
-- Monthly calendar view with absence count badges
-- Date selection for detailed absence information
-- Navigation between months
-- Responsive grid layout
-
-### AbsenceStats
-- Date range selector for custom reporting periods
-- Summary statistics (total absences, unique students, average)
-- Class-by-class breakdown with visual indicators
-- CSV export functionality
-
-### SchoolBanner
-- University of Cambridge Primary School branding
-- Responsive typography and layout
-
-## API Integration
-
-The frontend communicates with the backend API at `http://localhost:5001/api`:
-
-- **GET /absences/today** - Fetch today's absences
-- **GET /absences/range** - Fetch absences within date range
-- **POST /absences** - Add new absence record
-- **DELETE /absences/:id** - Delete absence record
-- **GET /absences/stats** - Get absence statistics
-- Manages phone system simulation
-
-## Styling & Theme
-
-- Custom Material-UI theme with University of Cambridge colors
-- Pastel color palette for visual appeal
-- Consistent spacing and typography
-- Dark mode support through Material-UI theming
-- Responsive breakpoints for all screen sizes
-- Loading states and skeleton screens for better UX
-
-## Building for Production
-
+### Backend Testing
 ```bash
+cd backend
+npm test  # (when test suite is added)
+```
+
+### Production Build
+```bash
+cd frontend
 npm run build
 ```
 
-This creates an optimized production build in the `build` folder, ready for deployment.
+## 📊 Sample Data
+
+The system includes realistic sample data:
+- 6 absence records for today
+- Various absence reasons (illness, appointments, family matters)
+- Different classes represented
+- Phone system integration examples
+- Pending verification scenarios
+
+## 🔒 Security & Privacy
+
+- No real personal data included
+- Demo phone numbers only
+- Local development environment
+- SQLite database for contained data
+- No external API keys required
+
+## 🤝 Contributing
+
+This is a demonstration project for University of Cambridge Primary School.
+
+## 📄 License
+
+This software is proprietary to University of Cambridge Primary School.
+
+---
+
+**Built with ❤️ for University of Cambridge Primary School**
