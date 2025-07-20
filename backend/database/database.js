@@ -1,193 +1,189 @@
-const sqlite3 = require('sqlite3').verbose();
+const { Pool } = require('pg');
 const path = require('path');
 const fs = require('fs');
 
 class Database {
     constructor() {
-        this.db = null;
+        this.pool = null;
         this.init();
     }
 
     init() {
-        const dbPath = path.join(__dirname, 'absence_system.db');
-        
-        this.db = new sqlite3.Database(dbPath, (err) => {
+        // PostgreSQL connection configuration
+        this.pool = new Pool({
+            user: process.env.DB_USER || 'postgres',
+            host: process.env.DB_HOST || 'preschool.ctyo0iu00o7n.eu-north-1.rds.amazonaws.com',
+            database: process.env.DB_NAME || 'preschool',
+            password: process.env.DB_PASSWORD || 'onesound123',
+            port: parseInt(process.env.DB_PORT) || 5432,
+            ssl: {
+                rejectUnauthorized: false
+            }
+        });
+
+        // Test connection
+        this.pool.connect((err, client, release) => {
             if (err) {
-                console.error('Error opening database:', err.message);
+                console.error('Error connecting to PostgreSQL database:', err.message);
                 return;
             }
-            console.log('Connected to SQLite database');
+            console.log('Connected to PostgreSQL database');
+            release();
         });
 
         // Read and execute schema
-        const schemaPath = path.join(__dirname, 'schema.sql');
+        this.initializeSchema();
+    }
+
+    async initializeSchema() {
+        const schemaPath = path.join(__dirname, 'schema_pg.sql');
         if (fs.existsSync(schemaPath)) {
-            const schema = fs.readFileSync(schemaPath, 'utf8');
-            this.db.exec(schema, (err) => {
-                if (err) {
-                    console.error('Error executing schema:', err.message);
-                } else {
-                    console.log('Database schema initialized successfully');
+            try {
+                const schema = fs.readFileSync(schemaPath, 'utf8');
+                // Split schema into individual statements and execute them
+                const statements = schema.split(';').filter(stmt => stmt.trim());
+                
+                for (const statement of statements) {
+                    if (statement.trim()) {
+                        await this.pool.query(statement.trim());
+                    }
                 }
-            });
+                console.log('Database schema initialized successfully');
+            } catch (err) {
+                console.error('Error executing schema:', err.message);
+            }
         }
     }
 
     // Get all absences for a specific date
-    getAbsencesForDate(date) {
-        return new Promise((resolve, reject) => {
+    async getAbsencesForDate(date) {
+        try {
             const query = `
                 SELECT * FROM absences 
-                WHERE DATE(absence_date) = DATE(?) 
+                WHERE DATE(absence_date) = DATE($1) 
                 ORDER BY class_name, student_name
             `;
             
-            this.db.all(query, [date], (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(rows);
-                }
-            });
-        });
+            const result = await this.pool.query(query, [date]);
+            return result.rows;
+        } catch (err) {
+            throw err;
+        }
     }
 
     // Get absences within a date range
-    getAbsencesInRange(startDate, endDate) {
-        return new Promise((resolve, reject) => {
+    async getAbsencesInRange(startDate, endDate) {
+        try {
             const query = `
                 SELECT * FROM absences 
-                WHERE DATE(absence_date) BETWEEN DATE(?) AND DATE(?)
+                WHERE DATE(absence_date) BETWEEN DATE($1) AND DATE($2)
                 ORDER BY absence_date DESC, class_name, student_name
             `;
             
-            this.db.all(query, [startDate, endDate], (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(rows);
-                }
-            });
-        });
+            const result = await this.pool.query(query, [startDate, endDate]);
+            return result.rows;
+        } catch (err) {
+            throw err;
+        }
     }
 
     // Add new absence record
-    addAbsence(studentName, className, reason, absenceDate, phoneCallId = null, status = 'reported', notes = null) {
-        return new Promise((resolve, reject) => {
+    async addAbsence(studentName, className, reason, absenceDate, phoneCallId = null, status = 'reported', notes = null) {
+        try {
             const query = `
                 INSERT INTO absences (student_name, class_name, reason, absence_date, phone_system_call_id, status, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                RETURNING id
             `;
             
-            this.db.run(query, [studentName, className, reason, absenceDate, phoneCallId, status, notes], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({ id: this.lastID, changes: this.changes });
-                }
-            });
-        });
+            const result = await this.pool.query(query, [studentName, className, reason, absenceDate, phoneCallId, status, notes]);
+            return { id: result.rows[0].id, changes: 1 };
+        } catch (err) {
+            throw err;
+        }
     }
 
     // Get absence statistics
-    getAbsenceStats(startDate, endDate) {
-        return new Promise((resolve, reject) => {
+    async getAbsenceStats(startDate, endDate) {
+        try {
             const query = `
                 SELECT 
                     class_name,
                     COUNT(*) as absence_count,
                     COUNT(DISTINCT student_name) as unique_students,
-                    GROUP_CONCAT(DISTINCT reason) as reasons
+                    STRING_AGG(DISTINCT reason, ', ') as reasons
                 FROM absences 
-                WHERE DATE(absence_date) BETWEEN DATE(?) AND DATE(?)
+                WHERE DATE(absence_date) BETWEEN DATE($1) AND DATE($2)
                 GROUP BY class_name
                 ORDER BY absence_count DESC
             `;
             
-            this.db.all(query, [startDate, endDate], (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(rows);
-                }
-            });
-        });
+            const result = await this.pool.query(query, [startDate, endDate]);
+            return result.rows;
+        } catch (err) {
+            throw err;
+        }
     }
 
     // Update absence record
-    updateAbsence(id, status, notes = null) {
-        return new Promise((resolve, reject) => {
-            const query = 'UPDATE absences SET status = ?, notes = ? WHERE id = ?';
+    async updateAbsence(id, status, notes = null) {
+        try {
+            const query = 'UPDATE absences SET status = $1, notes = $2 WHERE id = $3';
             
-            this.db.run(query, [status, notes, id], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({ changes: this.changes });
-                }
-            });
-        });
+            const result = await this.pool.query(query, [status, notes, id]);
+            return { changes: result.rowCount };
+        } catch (err) {
+            throw err;
+        }
     }
 
     // Delete absence record
-    deleteAbsence(id) {
-        return new Promise((resolve, reject) => {
-            const query = 'DELETE FROM absences WHERE id = ?';
+    async deleteAbsence(id) {
+        try {
+            const query = 'DELETE FROM absences WHERE id = $1';
             
-            this.db.run(query, [id], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({ changes: this.changes });
-                }
-            });
-        });
+            const result = await this.pool.query(query, [id]);
+            return { changes: result.rowCount };
+        } catch (err) {
+            throw err;
+        }
     }
 
     // Get all classes
-    getClasses() {
-        return new Promise((resolve, reject) => {
+    async getClasses() {
+        try {
             const query = 'SELECT * FROM classes ORDER BY name';
             
-            this.db.all(query, [], (err, rows) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve(rows);
-                }
-            });
-        });
+            const result = await this.pool.query(query);
+            return result.rows;
+        } catch (err) {
+            throw err;
+        }
     }
 
     // Add phone log
-    addPhoneLog(callId, phoneNumber, callDuration, transcript) {
-        return new Promise((resolve, reject) => {
+    async addPhoneLog(callId, phoneNumber, callDuration, transcript) {
+        try {
             const query = `
                 INSERT INTO phone_logs (call_id, phone_number, call_duration, transcript)
-                VALUES (?, ?, ?, ?)
+                VALUES ($1, $2, $3, $4)
+                RETURNING id
             `;
             
-            this.db.run(query, [callId, phoneNumber, callDuration, transcript], function(err) {
-                if (err) {
-                    reject(err);
-                } else {
-                    resolve({ id: this.lastID, changes: this.changes });
-                }
-            });
-        });
+            const result = await this.pool.query(query, [callId, phoneNumber, callDuration, transcript]);
+            return { id: result.rows[0].id, changes: 1 };
+        } catch (err) {
+            throw err;
+        }
     }
 
-    close() {
-        return new Promise((resolve, reject) => {
-            this.db.close((err) => {
-                if (err) {
-                    reject(err);
-                } else {
-                    console.log('Database connection closed');
-                    resolve();
-                }
-            });
-        });
+    async close() {
+        try {
+            await this.pool.end();
+            console.log('Database connection closed');
+        } catch (err) {
+            throw err;
+        }
     }
 }
 
