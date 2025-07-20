@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   AppBar, 
   Toolbar, 
@@ -10,6 +10,16 @@ import {
 import { School, Dashboard } from '@mui/icons-material';
 
 const SchoolBanner: React.FC = () => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000); // Update every minute
+
+    return () => clearInterval(timer);
+  }, []);
+
   return (
     <AppBar position="static" elevation={0} sx={{ 
       background: 'linear-gradient(135deg, #7FB3D3 0%, #90C695 50%, #B39DDB 100%)',
@@ -69,7 +79,7 @@ const SchoolBanner: React.FC = () => {
                 fontWeight: 500
               }}
             >
-              {new Date().toLocaleDateString('en-GB', { 
+              {currentTime.toLocaleDateString('en-GB', { 
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
@@ -83,7 +93,7 @@ const SchoolBanner: React.FC = () => {
                 mt: 0.5
               }}
             >
-              {new Date().toLocaleTimeString('en-GB', { 
+              {currentTime.toLocaleTimeString('en-GB', { 
                 hour: '2-digit',
                 minute: '2-digit'
               })}
