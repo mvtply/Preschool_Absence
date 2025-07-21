@@ -113,8 +113,8 @@ const AbsenceStats: React.FC = () => {
     return colors[className as keyof typeof colors] || '#B39DDB';
   };
 
-  const getTotalAbsences = () => stats.reduce((sum, stat) => sum + stat.absence_count, 0);
-  const getTotalUniqueStudents = () => stats.reduce((sum, stat) => sum + stat.unique_students, 0);
+  const getTotalAbsences = () => stats.reduce((sum, stat) => sum + Number(stat.absence_count), 0);
+  const getTotalUniqueStudents = () => stats.reduce((sum, stat) => sum + Number(stat.unique_students), 0);
 
   return (
     <Card>
