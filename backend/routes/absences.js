@@ -100,8 +100,8 @@ router.put('/:id', async (req, res) => {
             return res.status(400).json({ error: 'Valid absence ID is required' });
         }
         
-        if (!status || !['reported', 'approved', 'pending verification'].includes(status)) {
-            return res.status(400).json({ error: 'Valid status is required (reported, approved, pending verification)' });
+        if (!status || !['reported', 'pending verification'].includes(status)) {
+            return res.status(400).json({ error: 'Valid status is required (reported, pending verification)' });
         }
         
         const result = await req.db.updateAbsence(parseInt(id), status, notes || null);

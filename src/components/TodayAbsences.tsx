@@ -30,7 +30,7 @@ interface Absence {
   absence_date: string;
   reported_at: string;
   phone_system_call_id: string | null;
-  status: 'reported' | 'approved' | 'questioned';
+  status: 'reported' | 'pending verification';
   notes: string | null;
 }
 
@@ -91,17 +91,17 @@ const TodayAbsences: React.FC<TodayAbsencesProps> = ({ onRefresh }) => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'success';
+      case 'reported': return 'success';
       case 'pending verification': return 'warning';
-      default: return 'primary';
+      default: return 'success';
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'approved': return <CheckCircle />;
+      case 'reported': return <CheckCircle />;
       case 'pending verification': return <Warning />;
-      default: return <PersonOff />;
+      default: return <CheckCircle />;
     }
   };
 

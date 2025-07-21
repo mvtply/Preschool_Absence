@@ -109,8 +109,8 @@ class Database {
             const query = `
                 SELECT 
                     class_name,
-                    COUNT(*) as absence_count,
-                    COUNT(DISTINCT student_name) as unique_students,
+                    COUNT(*)::int as absence_count,
+                    COUNT(DISTINCT student_name)::int as unique_students,
                     STRING_AGG(DISTINCT reason, ', ') as reasons
                 FROM absences 
                 WHERE DATE(absence_date) BETWEEN DATE($1) AND DATE($2)

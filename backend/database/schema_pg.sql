@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS absences (
     absence_date DATE NOT NULL,
     reported_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     phone_system_call_id VARCHAR(255),
-    status VARCHAR(50) DEFAULT 'reported',
+    status VARCHAR(50) DEFAULT 'reported' CHECK (status IN ('reported', 'pending verification')),
     notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
