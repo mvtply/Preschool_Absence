@@ -6,19 +6,17 @@ A comprehensive full-stack application for tracking student absences through an 
 
 ```
 Preschool_Absence/
-├── frontend/                 # React TypeScript frontend
-│   ├── src/
-│   │   ├── components/       # React components
-│   │   ├── App.tsx          # Main application
-│   │   └── theme.ts         # Material-UI theme
-│   ├── public/              # Static assets
-│   ├── package.json         # Frontend dependencies
-│   └── README.md           # Frontend documentation
+├── src/                      # React TypeScript frontend (root level)
+│   ├── components/           # React components
+│   ├── App.tsx              # Main application
+│   └── theme.ts             # Material-UI theme
+├── public/                  # Static assets
 ├── backend/                 # Node.js Express backend
 │   ├── routes/             # API route handlers
-│   ├── database/           # SQLite database & schema
+│   ├── database/           # PostgreSQL database & schema
 │   ├── server.js           # Express server
 │   └── package.json        # Backend dependencies
+├── package.json            # Root package.json with dev scripts
 ├── dummy_absences_today.json # Sample data
 └── README.md               # This file
 ```
@@ -28,6 +26,7 @@ Preschool_Absence/
 ### Prerequisites
 - Node.js 16+
 - npm
+- PostgreSQL database access
 
 ### 1. Clone Repository
 ```bash
@@ -35,30 +34,69 @@ git clone https://github.com/RoaringSquid/Preschool_Absence.git
 cd Preschool_Absence
 ```
 
-### 2. Install Dependencies
+### 2. Install All Dependencies (Automated)
 ```bash
-# Install backend dependencies
-cd backend
-npm install
-
-# Install frontend dependencies  
-cd ../frontend
-npm install
+# Install both frontend and backend dependencies automatically
+npm run install:all
 ```
 
-### 3. Start Development Servers
-```bash
-# Start backend (from backend directory)
-npm start
+**What gets installed automatically:**
+- **Frontend**: React, TypeScript, Material-UI, testing libraries, web-vitals
+- **Backend**: Node.js, Express, PostgreSQL client, CORS, body-parser
+- **Development**: Concurrently for running both services, nodemon for auto-restart
 
-# Start frontend (from frontend directory) 
-npm start
+### 3. Configure Database
+Set up your PostgreSQL connection in `backend/.env`:
+```bash
+DB_HOST=your-database-host
+DB_PORT=5432
+DB_NAME=preschool
+DB_USER=postgres
+DB_PASSWORD=your-password
 ```
 
-### 4. Access Application
+### 4. Start Both Services (Simplified)
+```bash
+# Start both frontend and backend simultaneously
+npm run dev
+```
+
+**Alternative: Start services individually**
+```bash
+# Backend only (from root directory)
+npm run start:backend
+
+# Frontend only (from root directory) 
+npm run start:frontend
+```
+
+### 5. Stop Both Services
+```bash
+# Press Ctrl+C to stop both services when using npm run dev
+```
+
+### 6. Access Application
 - **Frontend Dashboard**: http://localhost:3000
 - **Backend API**: http://localhost:5001
 - **API Health Check**: http://localhost:5001/api/health
+
+## 🔧 Troubleshooting
+
+### Dependency Installation Issues
+If you encounter peer dependency conflicts during installation:
+```bash
+# Use legacy peer deps flag
+npm install --legacy-peer-deps
+
+# Or for the install:all script
+npm run install:all --legacy-peer-deps
+```
+
+### Common Setup Issues
+- **Missing dependencies**: All required libraries are pre-configured in package.json
+- **TypeScript errors**: Ensure all @types packages are installed via `npm run install:all`
+- **Database connection**: Verify your `.env` file in the backend directory
+- **Port conflicts**: Ensure ports 3000 and 5001 are available
 
 ## 🎯 Features
 
@@ -74,7 +112,7 @@ npm start
 - **Responsive Design**: Works on desktop, tablet, and mobile
 - **Material-UI Components**: Professional, accessible interface
 - **TypeScript**: Type-safe frontend development
-- **SQLite Database**: Lightweight, file-based data storage
+- **PostgreSQL Database**: Robust, scalable database with AWS RDS support
 - **RESTful API**: Clean, documented API endpoints
 - **Real-time Updates**: Live data synchronization
 
@@ -124,8 +162,7 @@ npm start
 - **phone_logs**: Phone system call logs
 
 ### Status Values
-- `reported`: Standard absence report
-- `approved`: Verified and approved
+- `reported`: Standard absence report (accepted by school)  
 - `pending verification`: Requires manual review (poor audio quality, heavy accent, etc.)
 
 ## 🎨 Design System
@@ -170,8 +207,8 @@ The system includes realistic sample data:
 - No real personal data included
 - Demo phone numbers only
 - Local development environment
-- SQLite database for contained data
-- No external API keys required
+- PostgreSQL database with secure connection
+- Environment variables for database credentials
 
 ## 🤝 Contributing
 
