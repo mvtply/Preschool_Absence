@@ -44,15 +44,7 @@ CREATE TABLE IF NOT EXISTS phone_logs (
     status VARCHAR(50) DEFAULT 'processed'
 );
 
--- Insert default classes
-INSERT INTO classes (name, teacher_name) VALUES 
-('Reception A', 'Mrs. Johnson'),
-('Reception B', 'Mr. Smith'),
-('Year 1 Green', 'Ms. Williams'),
-('Year 1 Blue', 'Mrs. Brown'),
-('Year 2 Red', 'Mr. Davis'),
-('Year 2 Yellow', 'Ms. Wilson')
-ON CONFLICT (name) DO NOTHING;
+-- Default classes removed - classes should be managed manually through the database
 
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS idx_absences_date ON absences(absence_date);

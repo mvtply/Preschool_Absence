@@ -7,6 +7,7 @@ const Database = require('./database/database');
 const absencesRoutes = require('./routes/absences');
 const classesRoutes = require('./routes/classes');
 const phoneRoutes = require('./routes/phone');
+const studentsRoutes = require('./routes/students');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -29,6 +30,7 @@ app.use((req, res, next) => {
 app.use('/api/absences', absencesRoutes);
 app.use('/api/classes', classesRoutes);
 app.use('/api/phone', phoneRoutes);
+app.use('/api/students', studentsRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

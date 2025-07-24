@@ -177,6 +177,58 @@ class Database {
         }
     }
 
+    // Validate student exists in specified class
+    async validateStudent(studentName, className) {
+        try {
+            const query = `
+                SELECT s.*, c.name as class_name, c.teacher_name 
+                FROM students s
+                JOIN classes c ON s.class_id = c.id
+                WHERE s.full_name = $1 AND c.name = $2
+            `;
+            
+            const result = await this.pool.query(query, [studentName, className]);
+            return result.rows.length > 0 ? result.rows[0] : null;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    // Get all students with their class information
+    async getAllStudents() {
+        try {
+            const query = `
+                SELECT s.*, c.name as class_name, c.teacher_name 
+                FROM students s
+                JOIN classes c ON s.class_id = c.id
+                ORDER BY c.name, s.full_name
+            `;
+            
+            const result = await this.pool.query(query);
+            return result.rows;
+        } catch (err) {
+            throw err;
+        }
+    }
+
+    // Get students by class name
+    async getStudentsByClass(className) {
+        try {
+            const query = `
+                SELECT s.*, c.name as class_name, c.teacher_name 
+                FROM students s
+                JOIN classes c ON s.class_id = c.id
+                WHERE c.name = $1
+                ORDER BY s.full_name
+            `;
+            
+            const result = await this.pool.query(query, [className]);
+            return result.rows;
+        } catch (err) {
+            throw err;
+        }
+    }
+
     async close() {
         try {
             await this.pool.end();

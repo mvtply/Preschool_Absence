@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ThemeProvider, 
   CssBaseline, 
@@ -12,7 +12,8 @@ import {
   TextField,
   MenuItem,
   Alert,
-  Snackbar
+  Snackbar,
+  CircularProgress
 } from '@mui/material';
 import { Add, Phone } from '@mui/icons-material';
 import theme from './theme';
@@ -21,20 +22,22 @@ import TodayAbsences from './components/TodayAbsences';
 import AbsenceCalendar from './components/AbsenceCalendar';
 import AbsenceStats from './components/AbsenceStats';
 
-const classes = [
-  'Reception A',
-  'Reception B', 
-  'Year 1 Green',
-  'Year 1 Blue',
-  'Year 2 Red',
-  'Year 2 Yellow'
-];
+interface Class {
+  id: number;
+  name: string;
+  teacher_name: string;
+  capacity: number;
+  created_at: string;
+}
 
 function App() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [simulateDialogOpen, setSimulateDialogOpen] = useState(false);
   const [manualDialogOpen, setManualDialogOpen] = useState(false);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' });
+  const [classes, setClasses] = useState<Class[]>([]);
+  const [loadingClasses, setLoadingClasses] = useState(false);
+  const [validatingStudent, setValidatingStudent] = useState(false);
   
   // Manual entry form state
   const [formData, setFormData] = useState({
@@ -42,6 +45,53 @@ function App() {
     className: '',
     reason: ''
   });
+
+  // Fetch classes when manual dialog opens
+  useEffect(() => {
+    if (manualDialogOpen) {
+      fetchClasses();
+    }
+  }, [manualDialogOpen]);
+
+  const fetchClasses = async () => {
+    setLoadingClasses(true);
+    try {
+      const response = await fetch('http://localhost:5001/api/classes');
+      if (!response.ok) {
+        throw new Error('Failed to fetch classes');
+      }
+      const classesData = await response.json();
+      setClasses(classesData);
+    } catch (error) {
+      setSnackbar({ 
+        open: true, 
+        message: 'Failed to load classes', 
+        severity: 'error' 
+      });
+    } finally {
+      setLoadingClasses(false);
+    }
+  };
+
+  const validateStudent = async (studentName: string, className: string) => {
+    try {
+      const response = await fetch(`http://localhost:5001/api/students/validate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ studentName, className })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Student validation failed');
+      }
+      
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      throw error;
+    }
+  };
 
   const handleRefresh = () => {
     setRefreshKey(prev => prev + 1);
@@ -76,20 +126,35 @@ function App() {
   };
 
   const handleManualEntry = async () => {
+    if (!formData.studentName.trim() || !formData.className || !formData.reason.trim()) {
+      setSnackbar({ 
+        open: true, 
+        message: 'Please fill in all fields', 
+        severity: 'error' 
+      });
+      return;
+    }
+
+    setValidatingStudent(true);
     try {
+      // First validate the student exists in the selected class
+      await validateStudent(formData.studentName.trim(), formData.className);
+      
+      // If validation passes, add the absence
       const response = await fetch('http://localhost:5001/api/absences', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          studentName: formData.studentName,
+          studentName: formData.studentName.trim(),
           className: formData.className,
-          reason: formData.reason,
+          reason: formData.reason.trim(),
           absenceDate: new Date().toISOString().split('T')[0]
         })
       });
       
       if (!response.ok) {
-        throw new Error('Failed to add absence');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to add absence');
       }
       
       setSnackbar({ 
@@ -100,12 +165,14 @@ function App() {
       setManualDialogOpen(false);
       setFormData({ studentName: '', className: '', reason: '' });
       handleRefresh();
-    } catch (error) {
+    } catch (error: any) {
       setSnackbar({ 
         open: true, 
-        message: 'Failed to add absence', 
+        message: error.message || 'Failed to add absence', 
         severity: 'error' 
       });
+    } finally {
+      setValidatingStudent(false);
     }
   };
 
@@ -169,13 +236,17 @@ function App() {
         <Dialog open={manualDialogOpen} onClose={() => setManualDialogOpen(false)} maxWidth="sm" fullWidth>
           <DialogTitle>Manual Absence Entry</DialogTitle>
           <DialogContent>
-            <Box sx={{ pt: 2 }}>
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Enter the student's name exactly as it appears in the system. The system will verify the student exists in the selected class before adding the absence.
+            </Alert>
+            <Box sx={{ pt: 1 }}>
               <TextField
                 label="Student Name"
                 fullWidth
                 value={formData.studentName}
                 onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
                 sx={{ mb: 2 }}
+                helperText="Enter the full name of the student"
               />
               <TextField
                 label="Class"
@@ -184,12 +255,20 @@ function App() {
                 value={formData.className}
                 onChange={(e) => setFormData({ ...formData, className: e.target.value })}
                 sx={{ mb: 2 }}
+                disabled={loadingClasses}
               >
-                {classes.map((className) => (
-                  <MenuItem key={className} value={className}>
-                    {className}
+                {loadingClasses ? (
+                  <MenuItem disabled>
+                    <CircularProgress size={20} sx={{ mr: 1 }} />
+                    Loading classes...
                   </MenuItem>
-                ))}
+                ) : (
+                  classes.map((classItem) => (
+                    <MenuItem key={classItem.id} value={classItem.name}>
+                      {classItem.name}
+                    </MenuItem>
+                  ))
+                )}
               </TextField>
               <TextField
                 label="Reason for Absence"
@@ -198,17 +277,27 @@ function App() {
                 rows={3}
                 value={formData.reason}
                 onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                helperText="Provide a detailed reason for the absence"
               />
             </Box>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setManualDialogOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={() => {
+                setManualDialogOpen(false);
+                setFormData({ studentName: '', className: '', reason: '' });
+              }}
+              disabled={validatingStudent}
+            >
+              Cancel
+            </Button>
             <Button 
               onClick={handleManualEntry} 
               variant="contained"
-              disabled={!formData.studentName || !formData.className || !formData.reason}
+              disabled={!formData.studentName.trim() || !formData.className || !formData.reason.trim() || validatingStudent}
+              startIcon={validatingStudent ? <CircularProgress size={20} /> : undefined}
             >
-              Add Absence
+              {validatingStudent ? 'Validating...' : 'Add Absence'}
             </Button>
           </DialogActions>
         </Dialog>
