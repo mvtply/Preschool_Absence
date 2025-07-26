@@ -5,7 +5,7 @@ Node.js Express backend for the University of Cambridge Primary School Absence T
 ## Technology Stack
 
 - **Node.js** with Express.js
-- **SQLite** database with SQL schema
+- **PostgreSQL** database hosted on AWS RDS
 - **CORS** enabled for frontend integration
 - **RESTful API** design
 
@@ -69,9 +69,9 @@ NODE_ENV=development         # Environment mode
 
 ## Database
 
-The system uses SQLite for simplicity and portability:
-- Database file: `database/absence_system.db`
-- Schema: `database/schema.sql`
+The system uses PostgreSQL for production-grade data storage:
+- Database: PostgreSQL on AWS RDS
+- Schema: `database/schema_pg.sql`
 - Connection: `database/database.js`
 
 ### Sample Data

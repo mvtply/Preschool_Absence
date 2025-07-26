@@ -15,7 +15,7 @@ A comprehensive dashboard system for tracking student absences through an automa
 
 - **Frontend**: React with TypeScript and Material-UI
 - **Backend**: Node.js with Express
-- **Database**: SQLite for local hosting
+- **Database**: PostgreSQL hosted on AWS RDS
 - **Phone Integration**: Mock API endpoints for phone system simulation
 
 ## Setup Instructions
@@ -97,7 +97,7 @@ This script will:
 
 ## Database Schema
 
-The system uses SQLite with the following main tables:
+The system uses PostgreSQL with the following main tables:
 
 - **absences**: Student absence records with phone system integration
 - **students**: Student information
