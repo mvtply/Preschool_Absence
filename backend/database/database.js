@@ -59,9 +59,19 @@ class Database {
     async getAbsencesForDate(date) {
         try {
             const query = `
-                SELECT * FROM absences 
+                SELECT 
+                    id,
+                    student_full_name as student_name,
+                    class_name,
+                    absence_reason as reason,
+                    absence_date,
+                    created_at as reported_at,
+                    phone_call_id as phone_system_call_id,
+                    absence_status as status,
+                    NULL as notes
+                FROM absences_frontend 
                 WHERE DATE(absence_date) = DATE($1) 
-                ORDER BY class_name, student_name
+                ORDER BY class_name, student_full_name
             `;
             
             const result = await this.pool.query(query, [date]);
@@ -75,9 +85,19 @@ class Database {
     async getAbsencesInRange(startDate, endDate) {
         try {
             const query = `
-                SELECT * FROM absences 
+                SELECT 
+                    id,
+                    student_full_name as student_name,
+                    class_name,
+                    absence_reason as reason,
+                    absence_date,
+                    created_at as reported_at,
+                    phone_call_id as phone_system_call_id,
+                    absence_status as status,
+                    NULL as notes
+                FROM absences_frontend 
                 WHERE DATE(absence_date) BETWEEN DATE($1) AND DATE($2)
-                ORDER BY absence_date DESC, class_name, student_name
+                ORDER BY absence_date DESC, class_name, student_full_name
             `;
             
             const result = await this.pool.query(query, [startDate, endDate]);
@@ -91,12 +111,12 @@ class Database {
     async addAbsence(studentName, className, reason, absenceDate, phoneCallId = null, status = 'reported', notes = null) {
         try {
             const query = `
-                INSERT INTO absences (student_name, class_name, reason, absence_date, phone_system_call_id, status, notes)
-                VALUES ($1, $2, $3, $4, $5, $6, $7)
+                INSERT INTO absences_frontend (student_full_name, class_name, absence_reason, absence_date, phone_call_id, absence_status)
+                VALUES ($1, $2, $3, $4, $5, $6)
                 RETURNING id
             `;
             
-            const result = await this.pool.query(query, [studentName, className, reason, absenceDate, phoneCallId, status, notes]);
+            const result = await this.pool.query(query, [studentName, className, reason, absenceDate, phoneCallId, status]);
             return { id: result.rows[0].id, changes: 1 };
         } catch (err) {
             throw err;
@@ -110,9 +130,9 @@ class Database {
                 SELECT 
                     class_name,
                     COUNT(*)::int as absence_count,
-                    COUNT(DISTINCT student_name)::int as unique_students,
-                    STRING_AGG(DISTINCT reason, ', ') as reasons
-                FROM absences 
+                    COUNT(DISTINCT student_full_name)::int as unique_students,
+                    STRING_AGG(DISTINCT absence_reason, ', ') as reasons
+                FROM absences_frontend 
                 WHERE DATE(absence_date) BETWEEN DATE($1) AND DATE($2)
                 GROUP BY class_name
                 ORDER BY absence_count DESC
@@ -128,9 +148,9 @@ class Database {
     // Update absence record
     async updateAbsence(id, status, notes = null) {
         try {
-            const query = 'UPDATE absences SET status = $1, notes = $2 WHERE id = $3';
+            const query = 'UPDATE absences_frontend SET absence_status = $1 WHERE id = $2';
             
-            const result = await this.pool.query(query, [status, notes, id]);
+            const result = await this.pool.query(query, [status, id]);
             return { changes: result.rowCount };
         } catch (err) {
             throw err;
@@ -140,7 +160,7 @@ class Database {
     // Delete absence record
     async deleteAbsence(id) {
         try {
-            const query = 'DELETE FROM absences WHERE id = $1';
+            const query = 'DELETE FROM absences_frontend WHERE id = $1';
             
             const result = await this.pool.query(query, [id]);
             return { changes: result.rowCount };
