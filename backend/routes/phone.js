@@ -20,17 +20,19 @@ router.post('/report', async (req, res) => {
             });
         }
         
-        // Add phone log
-        await req.db.addPhoneLog(callId, phoneNumber, callDuration, transcript);
-        
-        // Add absence record
+        // Add absence record with phone information
         const today = new Date().toISOString().split('T')[0];
         const result = await req.db.addAbsence(
             studentName, 
             className, 
             reason, 
             today, 
-            callId
+            callId,
+            'reported',
+            null,
+            phoneNumber,
+            callDuration,
+            transcript
         );
         
         res.status(201).json({ 
@@ -80,21 +82,18 @@ router.post('/simulate', async (req, res) => {
         const today = new Date().toISOString().split('T')[0];
         
         for (const report of sampleReports) {
-            // Add phone log
-            await req.db.addPhoneLog(
-                report.callId, 
-                report.phoneNumber, 
-                report.callDuration, 
-                report.transcript
-            );
-            
-            // Add absence record
+            // Add absence record with phone information
             const result = await req.db.addAbsence(
                 report.studentName, 
                 report.className, 
                 report.reason, 
                 today, 
-                report.callId
+                report.callId,
+                'reported',
+                null,
+                report.phoneNumber,
+                report.callDuration,
+                report.transcript
             );
             
             results.push({ callId: report.callId, absenceId: result.id });

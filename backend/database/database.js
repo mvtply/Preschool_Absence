@@ -36,18 +36,12 @@ class Database {
     }
 
     async initializeSchema() {
-        const schemaPath = path.join(__dirname, 'schema_pg.sql');
+        const schemaPath = path.join(__dirname, 'schema_clean.sql');
         if (fs.existsSync(schemaPath)) {
             try {
                 const schema = fs.readFileSync(schemaPath, 'utf8');
-                // Split schema into individual statements and execute them
-                const statements = schema.split(';').filter(stmt => stmt.trim());
-                
-                for (const statement of statements) {
-                    if (statement.trim()) {
-                        await this.pool.query(statement.trim());
-                    }
-                }
+                // Execute the entire schema as one statement to handle functions properly
+                await this.pool.query(schema);
                 console.log('Database schema initialized successfully');
             } catch (err) {
                 console.error('Error executing schema:', err.message);
@@ -108,15 +102,35 @@ class Database {
     }
 
     // Add new absence record
-    async addAbsence(studentName, className, reason, absenceDate, phoneCallId = null, status = 'reported', notes = null) {
+    async addAbsence(studentName, className, reason, absenceDate, phoneCallId = null, status = 'reported', notes = null, phoneNumber = null, callDuration = null, transcript = null) {
         try {
             const query = `
-                INSERT INTO absences_frontend (student_full_name, class_name, absence_reason, absence_date, phone_call_id, absence_status)
-                VALUES ($1, $2, $3, $4, $5, $6)
+                INSERT INTO absences_frontend (
+                    student_full_name, 
+                    class_name, 
+                    absence_reason, 
+                    absence_date, 
+                    phone_call_id, 
+                    absence_status,
+                    phone_number,
+                    call_duration,
+                    call_transcript
+                )
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
                 RETURNING id
             `;
             
-            const result = await this.pool.query(query, [studentName, className, reason, absenceDate, phoneCallId, status]);
+            const result = await this.pool.query(query, [
+                studentName, 
+                className, 
+                reason, 
+                absenceDate, 
+                phoneCallId, 
+                status,
+                phoneNumber,
+                callDuration,
+                transcript
+            ]);
             return { id: result.rows[0].id, changes: 1 };
         } catch (err) {
             throw err;
@@ -169,10 +183,17 @@ class Database {
         }
     }
 
-    // Get all classes
+    // Get all classes from absences_frontend
     async getClasses() {
         try {
-            const query = 'SELECT * FROM classes ORDER BY name';
+            const query = `
+                SELECT DISTINCT 
+                    class_name as name,
+                    class_teacher_name as teacher_name,
+                    class_capacity as capacity
+                FROM absences_frontend 
+                ORDER BY class_name
+            `;
             
             const result = await this.pool.query(query);
             return result.rows;
@@ -181,30 +202,17 @@ class Database {
         }
     }
 
-    // Add phone log
-    async addPhoneLog(callId, phoneNumber, callDuration, transcript) {
-        try {
-            const query = `
-                INSERT INTO phone_logs (call_id, phone_number, call_duration, transcript)
-                VALUES ($1, $2, $3, $4)
-                RETURNING id
-            `;
-            
-            const result = await this.pool.query(query, [callId, phoneNumber, callDuration, transcript]);
-            return { id: result.rows[0].id, changes: 1 };
-        } catch (err) {
-            throw err;
-        }
-    }
-
-    // Validate student exists in specified class
+    // Validate student exists in specified class (from absences_frontend data)
     async validateStudent(studentName, className) {
         try {
             const query = `
-                SELECT s.*, c.name as class_name, c.teacher_name 
-                FROM students s
-                JOIN classes c ON s.class_id = c.id
-                WHERE s.full_name = $1 AND c.name = $2
+                SELECT DISTINCT 
+                    student_full_name as full_name,
+                    class_name,
+                    class_teacher_name as teacher_name
+                FROM absences_frontend 
+                WHERE student_full_name = $1 AND class_name = $2
+                LIMIT 1
             `;
             
             const result = await this.pool.query(query, [studentName, className]);
@@ -214,14 +222,16 @@ class Database {
         }
     }
 
-    // Get all students with their class information
+    // Get all students from absences_frontend
     async getAllStudents() {
         try {
             const query = `
-                SELECT s.*, c.name as class_name, c.teacher_name 
-                FROM students s
-                JOIN classes c ON s.class_id = c.id
-                ORDER BY c.name, s.full_name
+                SELECT DISTINCT 
+                    student_full_name as full_name,
+                    class_name,
+                    class_teacher_name as teacher_name
+                FROM absences_frontend 
+                ORDER BY class_name, student_full_name
             `;
             
             const result = await this.pool.query(query);
@@ -231,15 +241,17 @@ class Database {
         }
     }
 
-    // Get students by class name
+    // Get students by class name from absences_frontend
     async getStudentsByClass(className) {
         try {
             const query = `
-                SELECT s.*, c.name as class_name, c.teacher_name 
-                FROM students s
-                JOIN classes c ON s.class_id = c.id
-                WHERE c.name = $1
-                ORDER BY s.full_name
+                SELECT DISTINCT 
+                    student_full_name as full_name,
+                    class_name,
+                    class_teacher_name as teacher_name
+                FROM absences_frontend 
+                WHERE class_name = $1
+                ORDER BY student_full_name
             `;
             
             const result = await this.pool.query(query, [className]);
